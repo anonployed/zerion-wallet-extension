@@ -61,10 +61,6 @@ export class TransactionService {
     this.purgeInterval = new Interval(() => this.performPurgeCheck());
   }
 
-  getTransactionsStore() {
-    return this.transactionsStore;
-  }
-
   async initialize() {
     await this.transactionsStore.ready();
     const transactions = this.transactionsStore.getState();
@@ -155,6 +151,10 @@ export class TransactionService {
     if (item) {
       this.transactionsStore.upsertTransaction({ ...item, dropped: true });
     }
+  }
+
+  getTransactionsStore() {
+    return this.transactionsStore;
   }
 
   addListeners() {
