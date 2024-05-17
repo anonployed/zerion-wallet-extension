@@ -47,5 +47,8 @@
     "storage",
     "unlimitedStorage"
   ],
-  "host_permissions": ["http://*/*", "https://*/*"]
+  "host_permissions": ["http://*/*", "https://*/*"],
+  "chrome_url_overrides": {
+    "newtab": "ui/new-tab.html"
+  }
 }
