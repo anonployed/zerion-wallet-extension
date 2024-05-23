@@ -198,10 +198,12 @@ function NetworkPage() {
   const network = networks?.getNetworkByName(createChain(chainStr));
   const dialogRef = useRef<HTMLDialogElementInterface | null>(null);
 
-  const { isCustomNetwork, isSavedNetwork } = useMemo(() => {
+  const { isCustomNetwork, isSavedNetwork, isVisitedNetwork } = useMemo(() => {
+    const chain = createChain(chainStr);
     return {
       isCustomNetwork: isCustomNetworkId(chainStr),
-      isSavedNetwork: networks?.isSavedLocallyChain(createChain(chainStr)),
+      isSavedNetwork: networks?.isSavedLocallyChain(chain),
+      isVisitedNetwork: networks?.isVisitedChain(chain),
     };
   }, [networks, chainStr]);
 
@@ -223,7 +225,7 @@ function NetworkPage() {
     mutationFn: saveChainConfig,
     onSuccess() {
       networksStore.update();
-      navigate(-1);
+      goBack();
     },
   });
   const removeMutation = useMutation({
@@ -231,7 +233,7 @@ function NetworkPage() {
       walletPort.request('removeEthereumChain', { chain: network.id }),
     onSuccess() {
       networksStore.update();
-      navigate(-1);
+      goBack();
     },
   });
   const resetMutation = useMutation({
@@ -239,7 +241,15 @@ function NetworkPage() {
       walletPort.request('resetEthereumChain', { chain: network.id }),
     onSuccess() {
       networksStore.update();
-      navigate(-1);
+      goBack();
+    },
+  });
+  const removeFromVisitedMutation = useMutation({
+    mutationFn: (network: NetworkConfig) =>
+      walletPort.request('removeVisitedEthereumChain', { chain: network.id }),
+    onSuccess() {
+      networksStore.update();
+      goBack();
     },
   });
   useBackgroundKind({ kind: 'white' });
@@ -297,6 +307,11 @@ function NetworkPage() {
           onReset={
             isSavedNetwork && !isCustomNetwork
               ? () => resetMutation.mutate(network)
+              : undefined
+          }
+          onRemoveFromVisited={
+            isVisitedNetwork
+              ? () => removeFromVisitedMutation.mutate(network)
               : undefined
           }
           onCancel={goBack}

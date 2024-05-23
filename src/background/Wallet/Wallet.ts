@@ -1182,9 +1182,28 @@ export class Wallet {
     params: { chain: chainStr },
   }: WalletMethodParams<{ chain: string }>) {
     this.verifyInternalOrigin(context);
-    this.ensureRecord(this.record);
     chainConfigStore.removeEthereumChain(createChain(chainStr));
     this.verifyOverviewChain();
+  }
+
+  addVisitedEthereumChainInternal(chain: Chain) {
+    chainConfigStore.addVisitedChain(chain);
+  }
+
+  async addVisitedEthereumChain({
+    context,
+    params: { chain: chainStr },
+  }: WalletMethodParams<{ chain: string }>) {
+    this.verifyInternalOrigin(context);
+    this.addVisitedEthereumChainInternal(createChain(chainStr));
+  }
+
+  async removeVisitedEthereumChain({
+    context,
+    params: { chain: chainStr },
+  }: WalletMethodParams<{ chain: string }>) {
+    this.verifyInternalOrigin(context);
+    chainConfigStore.removeVisitedChain(createChain(chainStr));
   }
 
   private async verifyOverviewChain() {
@@ -1200,7 +1219,7 @@ export class Wallet {
   async getEthereumChainSources({ context }: PublicMethodParams) {
     this.verifyInternalOrigin(context);
     await chainConfigStore.ready();
-    return chainConfigStore.getState().ethereumChainConfigs;
+    return chainConfigStore.getState();
   }
 
   async getPendingTransactions({ context }: PublicMethodParams) {
@@ -1620,6 +1639,7 @@ class PublicController {
           search: `?origin=${origin}&chainId=${chainId}`,
           onResolve: () => {
             this.wallet.setChainForOrigin(chain, origin);
+            this.wallet.addVisitedEthereumChainInternal(chain);
             setTimeout(() => resolve(null));
           },
           onDismiss: () => {
@@ -1640,6 +1660,7 @@ class PublicController {
       const chain = networks.getChainById(chainId);
       // Switch immediately and return success
       this.wallet.setChainForOrigin(chain, origin);
+      this.wallet.addVisitedEthereumChainInternal(chain);
       // return null in next tick to give provider enough time to change chainId property
       return new Promise((resolve) => {
         setTimeout(() => resolve(null));
