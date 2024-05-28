@@ -198,12 +198,18 @@ function NetworkPage() {
   const network = networks?.getNetworkByName(createChain(chainStr));
   const dialogRef = useRef<HTMLDialogElementInterface | null>(null);
 
-  const { isCustomNetwork, isSavedNetwork, isVisitedNetwork } = useMemo(() => {
+  const {
+    isCustomNetwork,
+    isSavedNetwork,
+    isVisitedNetwork,
+    isSupportsPositions,
+  } = useMemo(() => {
     const chain = createChain(chainStr);
     return {
       isCustomNetwork: isCustomNetworkId(chainStr),
       isSavedNetwork: networks?.isSavedLocallyChain(chain),
       isVisitedNetwork: networks?.isVisitedChain(chain),
+      isSupportsPositions: networks?.supports('positions', chain),
     };
   }, [networks, chainStr]);
 
@@ -310,7 +316,8 @@ function NetworkPage() {
               : undefined
           }
           onRemoveFromVisited={
-            isVisitedNetwork
+            // we show networks with supported positions based on the balance
+            isVisitedNetwork && !isSupportsPositions
               ? () => removeFromVisitedMutation.mutate(network)
               : undefined
           }
