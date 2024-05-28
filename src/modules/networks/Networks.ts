@@ -149,9 +149,20 @@ export class Networks {
     return this.networks.filter((item) => {
       const chain = createChain(item.id);
       return (
-        this.supports('positions', chain) ||
-        this.isSavedLocallyChain(chain) ||
-        this.isVisitedChain(chain)
+        !item.is_testnet &&
+        (this.supports('positions', chain) ||
+          this.isSavedLocallyChain(chain) ||
+          this.isVisitedChain(chain))
+      );
+    });
+  }
+
+  getTestNetworks() {
+    return this.networks.filter((item) => {
+      const chain = createChain(item.id);
+      return (
+        item.is_testnet &&
+        (this.isSavedLocallyChain(chain) || this.isVisitedChain(chain))
       );
     });
   }
@@ -163,10 +174,6 @@ export class Networks {
         chainConfig,
       ])
     );
-  }
-
-  getTestNetworks() {
-    return this.networks.filter((item) => item.is_testnet);
   }
 
   findEthereumChainById(chainId: ChainId) {

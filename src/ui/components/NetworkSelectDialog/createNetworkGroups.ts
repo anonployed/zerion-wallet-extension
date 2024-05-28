@@ -78,9 +78,9 @@ export function createGroups({
       ? {
           key: 'testnets',
           name: 'Test Networks',
-          items: testnetList.filter(
-            (network) => !mainNetworkPredicate(network)
-          ),
+          items: testnetList
+            .filter((network) => !mainNetworkPredicate(network))
+            .sort((a, b) => compareNetworks(a, b, null)),
         }
       : null,
   ].filter(isTruthy);
