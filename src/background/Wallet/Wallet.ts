@@ -150,7 +150,17 @@ type WalletMethodParams<T = undefined> = T extends undefined
 interface WalletEvents {
   recordUpdated: () => void;
   currentAddressChange: (addresses: string[]) => void;
-  chainChanged: (chain: Chain, origin: string) => void;
+
+  /**
+   * The initiator parameter enables us to distinguish between the `chainChanged` event
+   * triggered by a dapp when the user switches the chain within the dapp, and
+   * the chainChanged event triggered when the user changes the network in the extension's UI.
+   */
+  chainChanged: (
+    chain: Chain,
+    origin: string,
+    initiator: 'extension' | 'dapp'
+  ) => void;
   permissionsUpdated: () => void;
 }
 
@@ -863,8 +873,11 @@ export class Wallet {
     context,
   }: WalletMethodParams<{ chain: string; origin: string }>) {
     this.verifyInternalOrigin(context);
-    this.ensureRecord(this.record);
-    this.setChainForOrigin(createChain(chain), origin);
+    this.setChainForOrigin({
+      chain: createChain(chain),
+      origin,
+      initiator: 'extension',
+    });
   }
 
   /** @deprecated */
@@ -906,11 +919,19 @@ export class Wallet {
     throw new Error('setChainId is deprecated. Use setChainForOrigin instead');
   }
 
-  setChainForOrigin(chain: Chain, origin: string) {
+  setChainForOrigin({
+    chain,
+    origin,
+    initiator,
+  }: {
+    chain: Chain;
+    origin: string;
+    initiator: 'extension' | 'dapp';
+  }) {
     this.ensureRecord(this.record);
     this.record = Model.setChainForOrigin(this.record, { chain, origin });
     this.updateWalletStore(this.record);
-    this.emitter.emit('chainChanged', chain, origin);
+    this.emitter.emit('chainChanged', chain, origin, initiator);
   }
 
   /** A helper for interpretation in UI */
@@ -1208,7 +1229,11 @@ export class Wallet {
     });
     affectedPermissions.forEach(({ origin }) => {
       // TODO: remove chain for origin in case new chain is not set
-      this.setChainForOrigin(createChain(NetworkId.Ethereum), origin);
+      this.setChainForOrigin({
+        chain: createChain(NetworkId.Ethereum),
+        origin,
+        initiator: 'extension',
+      });
     });
     this.verifyOverviewChain();
     this.resetEthereumChain({ context, params: { chain: chainStr } });
@@ -1234,7 +1259,7 @@ export class Wallet {
       origin,
     });
 
-    this.emitter.emit('chainChanged', createChain(chain), origin);
+    this.emitter.emit('chainChanged', createChain(chain), origin, 'extension');
     emitter.emit('addEthereumChain', {
       values: [result.value],
       origin: result.origin,
@@ -1684,7 +1709,7 @@ class PublicController {
           route: '/switchEthereumChain',
           search: `?origin=${origin}&chainId=${chainId}`,
           onResolve: () => {
-            this.wallet.setChainForOrigin(chain, origin);
+            this.wallet.setChainForOrigin({ chain, origin, initiator: 'dapp' });
             setTimeout(() => resolve(null));
           },
           onDismiss: () => {
@@ -1704,7 +1729,7 @@ class PublicController {
     try {
       const chain = networks.getChainById(chainId);
       // Switch immediately and return success
-      this.wallet.setChainForOrigin(chain, origin);
+      this.wallet.setChainForOrigin({ chain, origin, initiator: 'dapp' });
       // return null in next tick to give provider enough time to change chainId property
       return new Promise((resolve) => {
         setTimeout(() => resolve(null));

@@ -29,7 +29,11 @@ export interface DaylightEventParams {
 export const emitter = createNanoEvents<{
   accountsChanged: () => void;
   chainsUpdated: () => void;
-  chainChanged: (chain: Chain) => void;
+  chainChanged: (
+    chain: Chain,
+    origin: string,
+    initiator: 'extension' | 'dapp'
+  ) => void;
   transactionSent: (
     data: { transaction: TransactionResponse } & TransactionContextParams
   ) => void;
