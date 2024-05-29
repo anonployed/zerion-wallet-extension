@@ -9,6 +9,12 @@ function preloadIcon(url: string): Promise<HTMLImageElement> {
   });
 }
 
+function clearNotifications() {
+  document
+    .querySelectorAll(`.${styles.notification}`)
+    .forEach((notification) => notification.remove());
+}
+
 function removeNotification(notification: HTMLElement) {
   notification.classList.add(styles.fadeOut);
   setTimeout(() => {
@@ -16,13 +22,29 @@ function removeNotification(notification: HTMLElement) {
   }, 500);
 }
 
-function createNotification(title: string, subtitle: string, iconUrl: string) {
-  preloadIcon(iconUrl).then(() => {
-    const notification = document.createElement('div');
-    notification.className = styles.notification;
+async function createNotification(
+  title: string,
+  subtitle: string,
+  iconUrl: string
+) {
+  clearNotifications();
 
-    notification.innerHTML = `
-    <img src="${iconUrl}" class="${styles.icon}" alt="">
+  let isIconLoaded = false;
+  try {
+    await preloadIcon(iconUrl);
+    isIconLoaded = true;
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.warn(`Failed to load icon ${iconUrl}`, e);
+  }
+
+  const notification = document.createElement('div');
+  notification.className = styles.notification;
+
+  notification.innerHTML = `
+    ${
+      isIconLoaded ? `<img src="${iconUrl}" class="${styles.icon}" alt="">` : ''
+    }
     <div class="${styles.content}">
       <div class="${styles.title}">${title}</div>
       <div class="${styles.subtitle}">${subtitle}</div>
@@ -31,22 +53,21 @@ function createNotification(title: string, subtitle: string, iconUrl: string) {
     </button>
   `;
 
-    document.body.appendChild(notification);
+  document.body.appendChild(notification);
 
-    setTimeout(() => {
-      notification.classList.add(styles.show);
-    }, 100);
+  setTimeout(() => {
+    notification.classList.add(styles.show);
+  }, 100);
 
-    setTimeout(() => {
+  setTimeout(() => {
+    removeNotification(notification);
+  }, 2400);
+
+  notification
+    .querySelector(`.${styles.close}`)
+    ?.addEventListener('click', () => {
       removeNotification(notification);
-    }, 2400);
-
-    notification
-      .querySelector(`.${styles.close}`)
-      ?.addEventListener('click', () => {
-        removeNotification(notification);
-      });
-  });
+    });
 }
 
 Object.assign(window, { createNotification, removeNotification });
