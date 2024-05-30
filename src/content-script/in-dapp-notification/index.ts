@@ -49,7 +49,7 @@ async function createNotification(
       <div class="${styles.title}">${title}</div>
       <div class="${styles.subtitle}">${subtitle}</div>
     </div>
-    <button class="${styles.close}">
+    <button aria-label="Close" class="${styles.close}">
     </button>
   `;
 
