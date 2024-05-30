@@ -20,8 +20,8 @@ export function handleAccountEvents({ account }: { account: Account }) {
       wallet.emitter.on('permissionsUpdated', () => {
         emitter.emit('accountsChanged');
       }),
-      wallet.emitter.on('chainChanged', (chain, origin, initiator) => {
-        emitter.emit('chainChanged', chain, origin, initiator);
+      wallet.emitter.on('chainChanged', (chain, origin) => {
+        emitter.emit('chainChanged', chain, origin);
         emitter.emit('chainsUpdated');
       })
     );

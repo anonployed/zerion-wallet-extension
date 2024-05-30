@@ -17,12 +17,7 @@ const SCRIPT_PATH = 'content-script/in-dapp-notification/index.js';
 const STYLES_PATH = 'content-script/in-dapp-notification/index.css';
 
 export function initialize() {
-  emitter.on('chainChanged', async (chain, origin, initiator) => {
-    // Do not show in-dapp notifications if the chain change was not triggered by a dapp
-    if (initiator !== 'dapp') {
-      return;
-    }
-
+  emitter.on('chainChanged', async (chain, origin) => {
     const activeTabData = await getActiveTabOrigin();
     const activeTabId = activeTabData?.tab.id;
     const activeTabOrigin = activeTabData?.tabOrigin;

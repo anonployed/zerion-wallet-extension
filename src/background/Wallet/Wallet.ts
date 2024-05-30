@@ -151,16 +151,7 @@ interface WalletEvents {
   recordUpdated: () => void;
   currentAddressChange: (addresses: string[]) => void;
 
-  /**
-   * The initiator parameter enables us to distinguish between the `chainChanged` event
-   * triggered by a dapp when the user switches the chain within the dapp, and
-   * the chainChanged event triggered when the user changes the network in the extension's UI.
-   */
-  chainChanged: (
-    chain: Chain,
-    origin: string,
-    initiator: 'extension' | 'dapp'
-  ) => void;
+  chainChanged: (chain: Chain, origin: string) => void;
   permissionsUpdated: () => void;
 }
 
@@ -876,7 +867,6 @@ export class Wallet {
     this.setChainForOrigin({
       chain: createChain(chain),
       origin,
-      initiator: 'extension',
     });
   }
 
@@ -919,19 +909,11 @@ export class Wallet {
     throw new Error('setChainId is deprecated. Use setChainForOrigin instead');
   }
 
-  setChainForOrigin({
-    chain,
-    origin,
-    initiator,
-  }: {
-    chain: Chain;
-    origin: string;
-    initiator: 'extension' | 'dapp';
-  }) {
+  setChainForOrigin({ chain, origin }: { chain: Chain; origin: string }) {
     this.ensureRecord(this.record);
     this.record = Model.setChainForOrigin(this.record, { chain, origin });
     this.updateWalletStore(this.record);
-    this.emitter.emit('chainChanged', chain, origin, initiator);
+    this.emitter.emit('chainChanged', chain, origin);
   }
 
   /** A helper for interpretation in UI */
@@ -1232,7 +1214,6 @@ export class Wallet {
       this.setChainForOrigin({
         chain: createChain(NetworkId.Ethereum),
         origin,
-        initiator: 'extension',
       });
     });
     this.verifyOverviewChain();
@@ -1259,7 +1240,7 @@ export class Wallet {
       origin,
     });
 
-    this.emitter.emit('chainChanged', createChain(chain), origin, 'extension');
+    this.emitter.emit('chainChanged', createChain(chain), origin);
     emitter.emit('addEthereumChain', {
       values: [result.value],
       origin: result.origin,
@@ -1709,7 +1690,7 @@ class PublicController {
           route: '/switchEthereumChain',
           search: `?origin=${origin}&chainId=${chainId}`,
           onResolve: () => {
-            this.wallet.setChainForOrigin({ chain, origin, initiator: 'dapp' });
+            this.wallet.setChainForOrigin({ chain, origin });
             setTimeout(() => resolve(null));
           },
           onDismiss: () => {
@@ -1729,7 +1710,7 @@ class PublicController {
     try {
       const chain = networks.getChainById(chainId);
       // Switch immediately and return success
-      this.wallet.setChainForOrigin({ chain, origin, initiator: 'dapp' });
+      this.wallet.setChainForOrigin({ chain, origin });
       // return null in next tick to give provider enough time to change chainId property
       return new Promise((resolve) => {
         setTimeout(() => resolve(null));
