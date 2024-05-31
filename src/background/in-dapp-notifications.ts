@@ -18,6 +18,18 @@ declare global {
   }
 }
 
+function showNotification({
+  title,
+  subtitle,
+  iconUrl,
+}: {
+  title: string;
+  subtitle: string;
+  iconUrl?: string;
+}) {
+  window.createNotification({ title, subtitle, iconUrl });
+}
+
 async function getActiveTabWithOrigin(origin: string) {
   const tabData = await getActiveTabOrigin();
   const tabId = tabData?.tab.id;
@@ -34,37 +46,36 @@ const SCRIPT_PATH = 'content-script/in-dapp-notification/index.js';
 const STYLES_PATH = 'content-script/in-dapp-notification/index.css';
 
 async function insertNotificationScripts(tabId: number) {
-  await chrome.scripting.insertCSS({
-    target: { tabId },
-    files: [STYLES_PATH],
-  });
+  await chrome.scripting.insertCSS({ target: { tabId }, files: [STYLES_PATH] });
   await chrome.scripting.executeScript({
     target: { tabId },
     files: [SCRIPT_PATH],
   });
 }
 
-async function showNotification(
+async function removeNotificationScripts(tabId: number) {
+  try {
+    await chrome.scripting.removeCSS({
+      target: { tabId },
+      files: [STYLES_PATH],
+    });
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.warn('Failed to remove CSS for in-dapp notifications:', error);
+  }
+}
+
+async function notify(
   tabId: number,
-  args: Parameters<typeof window.createNotification>
+  args: Parameters<typeof showNotification>
 ) {
   insertNotificationScripts(tabId);
   await chrome.scripting.executeScript({
     target: { tabId },
-    func: window.createNotification,
+    func: showNotification,
     args,
   });
-  setTimeout(async () => {
-    try {
-      await chrome.scripting.removeCSS({
-        target: { tabId },
-        files: [STYLES_PATH],
-      });
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.warn('Failed to remove CSS for in-dapp notifications:', error);
-    }
-  }, 5000);
+  setTimeout(removeNotificationScripts, 5000);
 }
 
 async function handleChainChanged(chain: Chain, origin: string) {
@@ -77,13 +88,12 @@ async function handleChainChanged(chain: Chain, origin: string) {
   if (!network) {
     return;
   }
-  await showNotification(tabId, [
-    {
-      title: 'Network Switched',
-      subtitle: network.name,
-      iconUrl: network.icon_url,
-    },
-  ]);
+  const message = {
+    title: 'Network Switched',
+    subtitle: network.name,
+    iconUrl: network.icon_url,
+  };
+  await notify(tabId, [message]);
 }
 
 async function handleSwitchChainError(chainId: ChainId, origin: string) {
@@ -91,12 +101,11 @@ async function handleSwitchChainError(chainId: ChainId, origin: string) {
   if (!tabId) {
     return;
   }
-  await showNotification(tabId, [
-    {
-      title: `Unrecognized Network Id: ${chainId.toString()}`,
-      subtitle: 'Please check your network settings',
-    },
-  ]);
+  const message = {
+    title: `Unrecognized Network Id: ${chainId.toString()}`,
+    subtitle: 'Please check your network settings',
+  };
+  await notify(tabId, [message]);
 }
 
 export function initialize() {
