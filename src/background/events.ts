@@ -7,6 +7,7 @@ import type {
   TransactionContextParams,
 } from 'src/shared/types/SignatureContextParams';
 import type { AddEthereumChainParameter } from 'src/modules/ethereum/types/AddEthereumChainParameter';
+import type { ChainId } from 'src/modules/ethereum/transactions/ChainId';
 import type { State as GlobalPreferencesState } from './Wallet/GlobalPreferences';
 import type { WalletOrigin } from './Wallet/model/WalletOrigin';
 import type { WalletContainer } from './Wallet/model/types';
@@ -30,6 +31,7 @@ export const emitter = createNanoEvents<{
   accountsChanged: () => void;
   chainsUpdated: () => void;
   chainChanged: (chain: Chain, origin: string) => void;
+  switchChainError: (chain: ChainId, origin: string) => void;
   transactionSent: (
     data: { transaction: TransactionResponse } & TransactionContextParams
   ) => void;

@@ -152,6 +152,7 @@ interface WalletEvents {
   currentAddressChange: (addresses: string[]) => void;
 
   chainChanged: (chain: Chain, origin: string) => void;
+  switchChainError: (chain: ChainId, origin: string) => void;
   permissionsUpdated: () => void;
 }
 
@@ -1716,6 +1717,7 @@ class PublicController {
         setTimeout(() => resolve(null));
       });
     } catch (e) {
+      this.wallet.emitter.emit('switchChainError', chainId, origin);
       throw new SwitchChainError(`Chain not configured: ${chainIdParameter}`);
     }
   }

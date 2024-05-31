@@ -22,20 +22,26 @@ function removeNotification(notification: HTMLElement) {
   }, 500);
 }
 
-async function createNotification(
-  title: string,
-  subtitle: string,
-  iconUrl: string
-) {
+async function createNotification({
+  title,
+  subtitle,
+  iconUrl,
+}: {
+  title: string;
+  subtitle: string;
+  iconUrl?: string;
+}) {
   clearNotifications();
 
   let isIconLoaded = false;
-  try {
-    await preloadIcon(iconUrl);
-    isIconLoaded = true;
-  } catch (e) {
-    // eslint-disable-next-line no-console
-    console.warn(`Failed to load icon ${iconUrl}`, e);
+  if (iconUrl) {
+    try {
+      await preloadIcon(iconUrl);
+      isIconLoaded = true;
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.warn(`Failed to load icon ${iconUrl}`, e);
+    }
   }
 
   const notification = document.createElement('div');
@@ -43,7 +49,9 @@ async function createNotification(
 
   notification.innerHTML = `
     ${
-      isIconLoaded ? `<img src="${iconUrl}" class="${styles.icon}" alt="">` : ''
+      iconUrl && isIconLoaded
+        ? `<img src="${iconUrl}" class="${styles.icon}" alt="">`
+        : ''
     }
     <div class="${styles.content}">
       <div class="${styles.title}">${title}</div>
