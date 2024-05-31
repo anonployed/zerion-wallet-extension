@@ -69,13 +69,13 @@ async function notify(
   tabId: number,
   args: Parameters<typeof showNotification>
 ) {
-  insertNotificationScripts(tabId);
+  await insertNotificationScripts(tabId);
   await chrome.scripting.executeScript({
     target: { tabId },
     func: showNotification,
     args,
   });
-  setTimeout(removeNotificationScripts, 5000);
+  setTimeout(() => removeNotificationScripts(tabId), 5000);
 }
 
 async function handleChainChanged(chain: Chain, origin: string) {
@@ -102,8 +102,13 @@ async function handleSwitchChainError(chainId: ChainId, origin: string) {
     return;
   }
   const message = {
-    title: `Unrecognized Network Id: ${chainId.toString()}`,
-    subtitle: 'Please check your network settings',
+    title: `Unrecognized Network`,
+    subtitle: `Unable to switch network to the Chain Id: ${chainId.toString()}.
+Please check your network settings and try again.`,
+    iconUrl: new URL(
+      `../images/logo-icon-48-disabled.png`,
+      import.meta.url
+    ).toString(),
   };
   await notify(tabId, [message]);
 }
