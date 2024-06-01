@@ -29,25 +29,15 @@
   "content_scripts": [
     {
       "all_frames": true,
-      "js": [
-        "content-script/index.ts"
-      ],
-      "matches": [
-        "https://*/*",
-        "http://localhost/*",
-        "http://0.0.0.0/*"
-      ],
+      "js": ["content-script/index.ts"],
+      "matches": ["https://*/*", "http://localhost/*", "http://0.0.0.0/*"],
       "run_at": "document_start"
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": [
-        "content-script/in-page.ts"
-      ],
-      "matches": [
-        "<all_urls>"
-      ]
+      "resources": ["content-script/in-page.ts"],
+      "matches": ["<all_urls>"]
     },
     {
       "resources": [
@@ -55,9 +45,7 @@
         "content-script/in-dapp-notification/index.css",
         "content-script/in-dapp-notification/zerion-logo.svg"
       ],
-      "matches": [
-        "<all_urls>"
-      ]
+      "matches": ["<all_urls>"]
     }
   ],
   "permissions": [
@@ -67,8 +55,5 @@
     "storage",
     "unlimitedStorage"
   ],
-  "host_permissions": [
-    "http://*/*",
-    "https://*/*"
-  ]
+  "host_permissions": ["http://*/*", "https://*/*"]
 }
