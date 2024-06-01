@@ -4,30 +4,23 @@ import type { ChainId } from 'src/modules/ethereum/transactions/ChainId';
 import type { Chain } from 'src/modules/networks/Chain';
 import { emitter } from './events';
 
+interface Notification {
+  title: string;
+  message: string;
+  icon: string;
+  compact: boolean;
+}
+
 declare global {
   interface Window {
-    createNotification({
-      title,
-      subtitle,
-      iconUrl,
-    }: {
-      title: string;
-      subtitle: string;
-      iconUrl?: string;
-    }): void;
+    createNotification(notification: Notification): void;
   }
 }
 
-function showNotification({
-  title,
-  subtitle,
-  iconUrl,
-}: {
-  title: string;
-  subtitle: string;
-  iconUrl?: string;
-}) {
-  window.createNotification({ title, subtitle, iconUrl });
+// We can't directly pass the window.createNotification to the chrome.scripting.executeScript,
+// so we have to create a separate wrapper function. More info: https://developer.chrome.com/docs/extensions/reference/api/scripting#type-ScriptInjection
+function showNotification(notification: Notification) {
+  window.createNotification(notification);
 }
 
 async function getActiveTabWithOrigin(origin: string) {
@@ -44,6 +37,7 @@ async function getActiveTabWithOrigin(origin: string) {
 
 const SCRIPT_PATH = 'content-script/in-dapp-notification/index.js';
 const STYLES_PATH = 'content-script/in-dapp-notification/index.css';
+const LOGO_ICON_PATH = 'content-script/in-dapp-notification/zerion-logo.svg';
 
 async function insertNotificationScripts(tabId: number) {
   await chrome.scripting.insertCSS({ target: { tabId }, files: [STYLES_PATH] });
@@ -65,17 +59,14 @@ async function removeNotificationScripts(tabId: number) {
   }
 }
 
-async function notify(
-  tabId: number,
-  args: Parameters<typeof showNotification>
-) {
+async function notify(tabId: number, notification: Notification) {
   await insertNotificationScripts(tabId);
   await chrome.scripting.executeScript({
     target: { tabId },
     func: showNotification,
-    args,
+    args: [notification],
   });
-  setTimeout(() => removeNotificationScripts(tabId), 5000);
+  setTimeout(() => removeNotificationScripts(tabId), 3000);
 }
 
 async function handleChainChanged(chain: Chain, origin: string) {
@@ -88,12 +79,13 @@ async function handleChainChanged(chain: Chain, origin: string) {
   if (!network) {
     return;
   }
-  const message = {
+
+  await notify(tabId, {
     title: 'Network Switched',
-    subtitle: network.name,
-    iconUrl: network.icon_url,
-  };
-  await notify(tabId, [message]);
+    message: network.name,
+    icon: network.icon_url,
+    compact: true,
+  });
 }
 
 async function handleSwitchChainError(chainId: ChainId, origin: string) {
@@ -101,16 +93,13 @@ async function handleSwitchChainError(chainId: ChainId, origin: string) {
   if (!tabId) {
     return;
   }
-  const message = {
+  await notify(tabId, {
     title: `Unrecognized Network`,
-    subtitle: `Unable to switch network to the Chain Id: ${chainId.toString()}.
+    message: `Unable to switch network to the Chain Id: <b>${chainId.toString()}</b>.
 Please check your network settings and try again.`,
-    iconUrl: new URL(
-      `../images/logo-icon-48-disabled.png`,
-      import.meta.url
-    ).toString(),
-  };
-  await notify(tabId, [message]);
+    icon: LOGO_ICON_PATH,
+    compact: false,
+  });
 }
 
 export function initialize() {
