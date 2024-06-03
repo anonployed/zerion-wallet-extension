@@ -1,4 +1,4 @@
-import { getActiveTabOrigin } from 'src/ui/shared/requests/getActiveTabOrigin';
+import browser from 'webextension-polyfill';
 import { networksStore } from 'src/modules/networks/networks-store.background';
 import type { ChainId } from 'src/modules/ethereum/transactions/ChainId';
 import type { Chain } from 'src/modules/networks/Chain';
@@ -17,22 +17,17 @@ declare global {
   }
 }
 
+async function getTabWithOrigin(origin: string) {
+  // The tab we're looking for doesn't have to be active or in the current window
+  const tabs = await browser.tabs.query({});
+  const tab = tabs.find((tab) => tab.url && new URL(tab.url).origin === origin);
+  return tab?.id;
+}
+
 // We can't directly pass the window.createNotification to the chrome.scripting.executeScript,
 // so we have to create a separate wrapper function. More info: https://developer.chrome.com/docs/extensions/reference/api/scripting#type-ScriptInjection
 function showNotification(notification: Notification) {
   window.createNotification(notification);
-}
-
-async function getActiveTabWithOrigin(origin: string) {
-  const tabData = await getActiveTabOrigin();
-  const tabId = tabData?.tab.id;
-  const tabOrigin = tabData?.tabOrigin;
-
-  if (tabId && origin === tabOrigin) {
-    return tabId;
-  } else {
-    return null;
-  }
 }
 
 const SCRIPT_PATH = 'content-script/in-dapp-notification/index.js';
@@ -70,7 +65,7 @@ async function notify(tabId: number, notification: Notification) {
 }
 
 async function handleChainChanged(chain: Chain, origin: string) {
-  const tabId = await getActiveTabWithOrigin(origin);
+  const tabId = await getTabWithOrigin(origin);
   if (!tabId) {
     return;
   }
@@ -89,7 +84,7 @@ async function handleChainChanged(chain: Chain, origin: string) {
 }
 
 async function handleSwitchChainError(chainId: ChainId, origin: string) {
-  const tabId = await getActiveTabWithOrigin(origin);
+  const tabId = await getTabWithOrigin(origin);
   if (!tabId) {
     return;
   }
