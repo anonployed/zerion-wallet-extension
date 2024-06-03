@@ -32,16 +32,16 @@
   transform: translateY(20px);
   opacity: 0;
   font-family: sans-serif;
+}
 
-  &.show {
-    transform: translateY(0);
-    opacity: 1;
-    animation: slideUp 0.4s forwards;
-  }
+.notification.show {
+  transform: translateY(0);
+  opacity: 1;
+  animation: slideUp 0.4s forwards;
+}
 
-  &.fadeOut {
-    animation: fadeOut 0.4s forwards;
-  }
+.notification.fadeOut {
+  animation: fadeOut 0.4s forwards;
 }
 
 .icon {
@@ -62,34 +62,34 @@
 
 .compact {
   width: 210px;
+}
 
-  .icon {
-    width: 36px;
-    height: 36px;
-  }
+.compact .icon {
+  width: 36px;
+  height: 36px;
+}
 
-  .message {
-    font-size: 12px;
-    line-height: 16px;
-    letter-spacing: 0.38px;
-    color: #81848e;
-  }
+.compact .message {
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.38px;
+  color: #81848e;
 }
 
 .large {
   width: 256px;
+}
 
-  .icon {
-    width: 32px;
-    height: 32px;
-  }
+.large .icon {
+  width: 32px;
+  height: 32px;
+}
 
-  .message {
-    font-size: 14px;
-    line-height: 20px;
-    letter-spacing: 0.2px;
-    color: #16161a;
-  }
+.large .message {
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: 0.2px;
+  color: #16161a;
 }
 
 .closeButton {

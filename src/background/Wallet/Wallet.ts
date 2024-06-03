@@ -150,9 +150,8 @@ type WalletMethodParams<T = undefined> = T extends undefined
 interface WalletEvents {
   recordUpdated: () => void;
   currentAddressChange: (addresses: string[]) => void;
-
   chainChanged: (chain: Chain, origin: string) => void;
-  switchChainError: (chain: ChainId, origin: string) => void;
+  switchChainError: (chainId: ChainId, origin: string) => void;
   permissionsUpdated: () => void;
 }
 
@@ -1717,7 +1716,7 @@ class PublicController {
         setTimeout(() => resolve(null));
       });
     } catch (e) {
-      this.wallet.emitter.emit('switchChainError', chainId, origin);
+      emitter.emit('switchChainError', chainId, origin);
       throw new SwitchChainError(`Chain not configured: ${chainIdParameter}`);
     }
   }

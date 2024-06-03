@@ -31,7 +31,7 @@ export const emitter = createNanoEvents<{
   accountsChanged: () => void;
   chainsUpdated: () => void;
   chainChanged: (chain: Chain, origin: string) => void;
-  switchChainError: (chain: ChainId, origin: string) => void;
+  switchChainError: (chainId: ChainId, origin: string) => void;
   transactionSent: (
     data: { transaction: TransactionResponse } & TransactionContextParams
   ) => void;
