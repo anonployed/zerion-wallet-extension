@@ -40,18 +40,6 @@ async function insertNotificationScripts(tabId: number) {
   });
 }
 
-async function removeNotificationScripts(tabId: number) {
-  try {
-    await chrome.scripting.removeCSS({
-      target: { tabId },
-      files: [STYLES_PATH],
-    });
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.warn('Failed to remove CSS for in-dapp notifications:', error);
-  }
-}
-
 async function notify(tabId: number, notification: InDappNotification) {
   await insertNotificationScripts(tabId);
   await chrome.scripting.executeScript({
@@ -59,7 +47,6 @@ async function notify(tabId: number, notification: InDappNotification) {
     func: showNotification,
     args: [notification],
   });
-  setTimeout(() => removeNotificationScripts(tabId), 3000);
 }
 
 async function handleChainChanged(chain: Chain, origin: string) {
