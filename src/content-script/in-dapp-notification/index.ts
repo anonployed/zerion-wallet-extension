@@ -24,14 +24,14 @@ const notifications = {
       console.warn(`Failed to load network icon ${networkUrl}`, e);
     }
 
-    const iconHTML = isIconLoaded
+    const networkIconHTML = isIconLoaded
       ? `<img src="${networkUrl}" class="${styles.networkIcon}" alt="">`
       : '';
 
     el.innerHTML = `
     <div class="${styles.hstack}" style="grid-gap: 12px;">
       <div class=${styles.zerionLogo}>
-        ${iconHTML}
+        ${networkIconHTML}
       </div>
       <div class="${styles.vstack}" style="grid-gap: 4px;">
         <div class="${styles.title}">Network Switched</div>
