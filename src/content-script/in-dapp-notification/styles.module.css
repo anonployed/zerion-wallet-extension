@@ -44,51 +44,70 @@
   animation: fadeOut 0.4s forwards;
 }
 
-.icon {
+.zerionLogo {
+  position: relative;
+  width: 40px;
+  height: 40px;
   border-radius: 8px;
+  background-image: url('data-url:./zerion-logo.svg');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 40px 40px;
+}
+
+.networkIcon {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  left: 22px;
+  top: 22px;
+  border: 2px solid #ffffff;
+  border-radius: 6px;
+}
+
+.title,
+.message,
+.switchChainError .chainId {
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: 0.3px;
 }
 
 .title {
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 24px;
-  letter-spacing: 0.25px;
   color: #16161a;
 }
 
 .message {
-  font-weight: 400;
+  font-weight: 500;
 }
 
-.compact {
+.chainChanged {
   width: 210px;
 }
 
-.compact .icon {
-  width: 36px;
-  height: 36px;
-}
-
-.compact .message {
-  font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.38px;
+.chainChanged .message {
   color: #81848e;
 }
 
-.large {
+.switchChainError {
   width: 256px;
 }
 
-.large .icon {
+.switchChainError .zerionLogo {
   width: 32px;
   height: 32px;
 }
 
-.large .message {
-  font-size: 14px;
-  line-height: 20px;
-  letter-spacing: 0.2px;
+.switchChainError .title {
+  font-size: 16px;
+  line-height: 24px;
+  letter-spacing: 0.25px;
+}
+
+.switchChainError .message {
+  font-weight: 400;
+  letter-spacing: 0.2;
   color: #16161a;
 }
 

@@ -1,3 +1,4 @@
+import type { InDappNotification } from 'src/shared/types/InDappNotification';
 import * as styles from './styles.module.css';
 
 function preloadImage(url: string): Promise<HTMLImageElement> {
@@ -9,97 +10,111 @@ function preloadImage(url: string): Promise<HTMLImageElement> {
   });
 }
 
-function clearNotifications() {
-  document
-    .querySelectorAll(`.${styles.notification}`)
-    .forEach((notification) => notification.remove());
-}
+const notifications = {
+  async chainChanged(networkName: string, networkUrl: string) {
+    const el = document.createElement('div');
+    el.className = `${styles.notification} ${styles.chainChanged}`;
 
-function removeNotification(notification: HTMLElement) {
-  notification.classList.add(styles.fadeOut);
-  setTimeout(() => {
-    notification.remove();
-  }, 500);
-}
-
-async function createNotification({
-  title,
-  message,
-  icon,
-  compact,
-}: {
-  title: string;
-  message: string;
-  icon: string;
-  compact: boolean;
-}) {
-  clearNotifications();
-
-  const iconSrc = icon.startsWith('http') ? icon : chrome.runtime.getURL(icon);
-  let isIconLoaded = false;
-
-  if (iconSrc) {
+    let isIconLoaded = false;
     try {
-      await preloadImage(iconSrc);
+      await preloadImage(networkUrl);
       isIconLoaded = true;
     } catch (e) {
       // eslint-disable-next-line no-console
-      console.warn(`Failed to load icon ${iconSrc}`, e);
+      console.warn(`Failed to load network icon ${networkUrl}`, e);
     }
-  }
 
-  const notification = document.createElement('div');
-  const layout = compact ? 'compact' : 'large';
-  notification.className = `${styles.notification} ${styles[layout]}`;
-
-  const iconHTML =
-    iconSrc && isIconLoaded
-      ? `<img src="${iconSrc}" class="${styles.icon}" alt="">`
+    const iconHTML = isIconLoaded
+      ? `<img src="${networkUrl}" class="${styles.networkIcon}" alt="">`
       : '';
-  const closeButtonHTML = `
-      <button aria-label="Close" class="${styles.closeButton}">
-      </button>
+
+    el.innerHTML = `
+    <div class="${styles.hstack}" style="grid-gap: 12px;">
+      <div class=${styles.zerionLogo}>
+        ${iconHTML}
+      </div>
+      <div class="${styles.vstack}" style="grid-gap: 4px;">
+        <div class="${styles.title}">Network Switched</div>
+        <div class="${styles.message}">${networkName}</div>
+      </div>
+    </div>
+    <button aria-label="Close" class="${styles.closeButton}">
+    </button>
   `;
 
-  if (compact) {
-    notification.innerHTML = `
-      <div class="${styles.hstack}" style="grid-gap: 12px;">
-        ${iconHTML}
-        <div class="${styles.vstack}" style="grid-gap: 4px;">
-          <div class="${styles.title}">${title}</div>
-          <div class="${styles.message}">${message}</div>
-        </div>
+    return el;
+  },
+
+  switchChainError(chainId: string) {
+    const el = document.createElement('div');
+    el.className = `${styles.notification} ${styles.switchChainError}`;
+
+    el.innerHTML = `
+    <div class="${styles.vstack}" style="grid-gap: 8px;">
+      <div class="${styles.hstack}" style="grid-gap: 12px">
+        <div class=${styles.zerionLogo}></div>
+        <div class="${styles.title}">Unrecognized Network</div>
       </div>
-      ${closeButtonHTML}
+      <div class="${styles.message}">
+        Unable to switch network to the <span class="${
+          styles.chainId
+        }">Chain Id: ${chainId.toString()}</span>.
+        Please check your network settings and try again.
+      </div>
+    </div>
+    <button aria-label="Close" class="${styles.closeButton}">
+    </button>
   `;
-  } else {
-    notification.innerHTML = `
-      <div class="${styles.vstack}" style="grid-gap: 8px;">
-        <div class="${styles.hstack}" style="grid-gap: 12px">
-          ${iconHTML}
-          <div class="${styles.title}">${title}</div>
-        </div>
-        <div class="${styles.message}">${message}</div>
-      </div>
-      ${closeButtonHTML}
-    `;
+
+    return el;
+  },
+};
+
+async function createNotification(notification: InDappNotification) {
+  if (notification.event === 'chainChanged') {
+    return await notifications.chainChanged(
+      notification.networkName,
+      notification.networkIcon
+    );
+  } else if (notification.event === 'switchChainError') {
+    return notifications.switchChainError(notification.chainId);
   }
 
-  document.body.appendChild(notification);
-
-  setTimeout(() => {
-    notification.classList.add(styles.show);
-  }, 100);
-
-  setTimeout(() => {
-    removeNotification(notification);
-  }, 2400);
-
-  notification
-    .querySelector(`.${styles.close}`)
-    ?.addEventListener('click', () => {
-      removeNotification(notification);
-    });
+  return null;
 }
 
-Object.assign(window, { createNotification, removeNotification });
+function clearNotifications() {
+  document
+    .querySelectorAll(`.${styles.notification}`)
+    .forEach((el) => el.remove());
+}
+
+function removeNotification(el: HTMLElement) {
+  el.classList.add(styles.fadeOut);
+  setTimeout(() => {
+    el.remove();
+  }, 500);
+}
+
+async function showNotification(notification: InDappNotification) {
+  clearNotifications();
+  const el = await createNotification(notification);
+  if (!el) {
+    return;
+  }
+
+  document.body.appendChild(el);
+
+  setTimeout(() => {
+    el.classList.add(styles.show);
+  }, 100);
+  setTimeout(() => {
+    removeNotification(el);
+  }, 2400);
+
+  el.querySelector(`.${styles.closeButton}`)?.addEventListener('click', () => {
+    removeNotification(el);
+  });
+}
+
+Object.assign(window, { showNotification, removeNotification });

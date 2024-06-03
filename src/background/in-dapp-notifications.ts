@@ -2,37 +2,35 @@ import browser from 'webextension-polyfill';
 import { networksStore } from 'src/modules/networks/networks-store.background';
 import type { ChainId } from 'src/modules/ethereum/transactions/ChainId';
 import type { Chain } from 'src/modules/networks/Chain';
+import type { InDappNotification } from 'src/shared/types/InDappNotification';
 import { emitter } from './events';
-
-interface Notification {
-  title: string;
-  message: string;
-  icon: string;
-  compact: boolean;
-}
 
 declare global {
   interface Window {
-    createNotification(notification: Notification): void;
+    showNotification(notification: InDappNotification): void;
   }
 }
 
-async function getTabWithOrigin(origin: string) {
-  // The tab we're looking for doesn't have to be active or in the current window
-  const tabs = await browser.tabs.query({});
+async function getActiveTabIdWithOrigin(origin: string) {
+  // In dev environment the tab we're looking for doesn't have to be active or in the current window.
+  // Otherwise it would be hard to debug the chainSwitchError case
+  const query =
+    process.env.NODE_ENV === 'production'
+      ? { currentWindow: true, active: true }
+      : {};
+  const tabs = await browser.tabs.query(query);
   const tab = tabs.find((tab) => tab.url && new URL(tab.url).origin === origin);
   return tab?.id;
 }
 
-// We can't directly pass the window.createNotification to the chrome.scripting.executeScript,
+// We can't directly pass the window.showNotification to the chrome.scripting.executeScript,
 // so we have to create a separate wrapper function. More info: https://developer.chrome.com/docs/extensions/reference/api/scripting#type-ScriptInjection
-function showNotification(notification: Notification) {
-  window.createNotification(notification);
+function showNotification(notification: InDappNotification) {
+  window.showNotification(notification);
 }
 
 const SCRIPT_PATH = 'content-script/in-dapp-notification/index.js';
 const STYLES_PATH = 'content-script/in-dapp-notification/index.css';
-const LOGO_ICON_PATH = 'content-script/in-dapp-notification/zerion-logo.svg';
 
 async function insertNotificationScripts(tabId: number) {
   await chrome.scripting.insertCSS({ target: { tabId }, files: [STYLES_PATH] });
@@ -54,7 +52,7 @@ async function removeNotificationScripts(tabId: number) {
   }
 }
 
-async function notify(tabId: number, notification: Notification) {
+async function notify(tabId: number, notification: InDappNotification) {
   await insertNotificationScripts(tabId);
   await chrome.scripting.executeScript({
     target: { tabId },
@@ -65,7 +63,7 @@ async function notify(tabId: number, notification: Notification) {
 }
 
 async function handleChainChanged(chain: Chain, origin: string) {
-  const tabId = await getTabWithOrigin(origin);
+  const tabId = await getActiveTabIdWithOrigin(origin);
   if (!tabId) {
     return;
   }
@@ -76,24 +74,20 @@ async function handleChainChanged(chain: Chain, origin: string) {
   }
 
   await notify(tabId, {
-    title: 'Network Switched',
-    message: network.name,
-    icon: network.icon_url,
-    compact: true,
+    event: 'chainChanged',
+    networkName: network.name,
+    networkIcon: network.icon_url,
   });
 }
 
 async function handleSwitchChainError(chainId: ChainId, origin: string) {
-  const tabId = await getTabWithOrigin(origin);
+  const tabId = await getActiveTabIdWithOrigin(origin);
   if (!tabId) {
     return;
   }
   await notify(tabId, {
-    title: `Unrecognized Network`,
-    message: `Unable to switch network to the Chain Id: <b>${chainId.toString()}</b>.
-Please check your network settings and try again.`,
-    icon: LOGO_ICON_PATH,
-    compact: false,
+    event: 'switchChainError',
+    chainId: chainId.toString(),
   });
 }
 
