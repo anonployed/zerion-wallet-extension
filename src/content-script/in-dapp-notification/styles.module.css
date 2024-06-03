@@ -66,8 +66,7 @@
 }
 
 .title,
-.message,
-.switchChainError .chainId {
+.message {
   font-weight: 500;
   font-size: 14px;
   line-height: 20px;
@@ -109,6 +108,10 @@
   font-weight: 400;
   letter-spacing: 0.2;
   color: #16161a;
+}
+
+.switchChainError .chainId {
+  font-weight: 600;
 }
 
 .closeButton {
