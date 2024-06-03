@@ -501,6 +501,7 @@ export function SwapForm() {
           <>
             <DialogTitle
               alignTitle="start"
+              closeKind="icon"
               title={
                 <HStack gap={4} alignItems="center">
                   <UIText kind="headline/h3">Slippage</UIText>
