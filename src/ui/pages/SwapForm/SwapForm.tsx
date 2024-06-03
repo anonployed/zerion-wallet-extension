@@ -91,6 +91,7 @@ import {
 import { ProtocolFeeLine } from './shared/ProtocolFeeLine';
 import { SlippageSettings } from './SlippageSettings';
 import { getQuotesErrorMessage } from './Quotes/getQuotesErrorMessage';
+import { SlippageLine } from './SlippageSettings/SlippageLine';
 
 const rootNode = getRootDomNode();
 
@@ -494,7 +495,8 @@ export function SwapForm() {
       />
       <BottomSheetDialog
         ref={slippageDialogRef}
-        height="min-content"
+        height="360px"
+        containerStyle={{ display: 'flex', flexDirection: 'column' }}
         renderWhenOpen={() => (
           <>
             <DialogTitle
@@ -671,6 +673,7 @@ export function SwapForm() {
       <Spacer height={16} />
       <VStack gap={8}>
         <RateLine swapView={swapView} quotesData={quotesData} />
+        <SlippageLine swapView={swapView} />
         {currentTransaction && chain && currentTransaction.gas ? (
           <React.Suspense
             fallback={
