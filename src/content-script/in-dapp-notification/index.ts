@@ -33,7 +33,7 @@ const notifications = {
       <div class=${styles.zerionLogo}>
         ${networkIconHTML}
       </div>
-      <div class="${styles.vstack}" style="grid-gap: 4px;">
+      <div class="${styles.vstack}" style="grid-gap: 0px;">
         <div class="${styles.title}">Network Switched</div>
         <div class="${styles.message}">${networkName}</div>
       </div>
