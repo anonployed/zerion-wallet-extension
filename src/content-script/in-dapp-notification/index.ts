@@ -76,11 +76,9 @@ async function createNotification(notification: InDappNotification) {
       notification.networkName,
       notification.networkIcon
     );
-  } else if (notification.event === 'switchChainError') {
+  } else {
     return notifications.switchChainError(notification.chainId);
   }
-
-  return null;
 }
 
 function clearNotifications() {
@@ -99,10 +97,6 @@ function removeNotification(el: HTMLElement) {
 async function showNotification(notification: InDappNotification) {
   clearNotifications();
   const el = await createNotification(notification);
-  if (!el) {
-    return;
-  }
-
   document.body.appendChild(el);
 
   setTimeout(() => {
