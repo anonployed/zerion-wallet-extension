@@ -32,6 +32,7 @@ import { isDeviceAccount } from 'src/shared/types/validators';
 import type { SignMsgBtnHandle } from 'src/ui/components/SignMessageButton';
 import { SignMessageButton } from 'src/ui/components/SignMessageButton';
 import { ellipsis } from 'src/ui/shared/typography';
+import { usePreferences } from 'src/ui/features/preferences';
 import { txErrorToMessage } from '../SendTransaction/shared/transactionErrorToMessage';
 import { SpeechBubble } from './SpeechBubble/SpeechBubble';
 import { useFetchUTCTime } from './useFetchUTCTime';
@@ -40,6 +41,7 @@ import { DataVerificationFailed } from './DataVerificationFailed';
 
 export function SignInWithEthereum() {
   const [params, setSearchParams] = useSearchParams();
+  const { preferences } = usePreferences();
   const updateSearchParam = (
     key: string,
     value: string,
@@ -274,18 +276,21 @@ export function SignInWithEthereum() {
             >
               Cancel
             </Button>
-            <SignMessageButton
-              ref={signMsgBtnRef}
-              wallet={wallet}
-              onClick={() => personalSign()}
-              buttonTitle={
-                personalSignMutation.isLoading
-                  ? `Signing In${ellipsis}`
-                  : !siweMessage?.isValid() && isDeviceAccount(wallet)
-                  ? 'Proceed anyway'
-                  : 'Sign In'
-              }
-            />
+            {preferences ? (
+              <SignMessageButton
+                ref={signMsgBtnRef}
+                wallet={wallet}
+                onClick={() => personalSign()}
+                buttonTitle={
+                  personalSignMutation.isLoading
+                    ? `Signing In${ellipsis}`
+                    : !siweMessage?.isValid() && isDeviceAccount(wallet)
+                    ? 'Proceed anyway'
+                    : 'Sign In'
+                }
+                holdToSign={preferences.enableHoldToSignButton}
+              />
+            ) : null}
           </div>
         </VStack>
       </PageColumn>
