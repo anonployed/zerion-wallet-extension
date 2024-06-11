@@ -45,10 +45,8 @@
     "alarms",
     "scripting",
     "storage",
-    "unlimitedStorage"
+    "unlimitedStorage",
+    "tabs"
   ],
-  "host_permissions": ["http://*/*", "https://*/*"],
-  "chrome_url_overrides": {
-    "newtab": "ui/new-tab.html"
-  }
+  "host_permissions": ["http://*/*", "https://*/*"]
 }
