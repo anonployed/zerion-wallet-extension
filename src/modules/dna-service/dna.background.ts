@@ -188,7 +188,7 @@ export class DnaService {
     chainId: number;
   }) {
     const hexedChainId = normalizeChainId(chainId);
-    const networks = await networksStore.loadNetworksWithChainId(hexedChainId);
+    const networks = await networksStore.loadNetworksByChainId(hexedChainId);
     const chain = networks.getChainById(hexedChainId).toString();
 
     const actionId = uuidv5(

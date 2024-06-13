@@ -11,7 +11,7 @@ export async function registerTransaction(
   transaction: ethers.providers.TransactionResponse
 ) {
   const chainId = normalizeChainId(transaction.chainId);
-  const networks = await networksStore.loadNetworksWithChainId(chainId);
+  const networks = await networksStore.loadNetworksByChainId(chainId);
   const network = networks.getNetworkById(chainId);
 
   if (isCustomNetworkId(network.id)) {

@@ -143,7 +143,7 @@ export function NonceLine({
   const { data, isLoading, isError } = useQuery({
     queryKey: ['getTransactionCount', from, chain],
     queryFn: async () => {
-      const networks = await networksStore.load([chain.toString()]);
+      const networks = await networksStore.load({ chains: [chain.toString()] });
       return uiGetBestKnownTransactionCount({
         address: from,
         chain,

@@ -12,7 +12,7 @@ import type { Store } from 'store-unit';
 import { client, useAddressPortfolioDecomposition } from 'defi-sdk';
 import { useSendForm } from '@zeriontech/transactions';
 import { useAddressParams } from 'src/ui/shared/user-address/useAddressParams';
-import { networksStore } from 'src/modules/networks/networks-store.client';
+import { getNetworksStore } from 'src/modules/networks/networks-store.client';
 import { PageColumn } from 'src/ui/components/PageColumn';
 import { PageTop } from 'src/ui/components/PageTop';
 import {
@@ -52,6 +52,7 @@ import { useSizeStore } from 'src/ui/Onboarding/useSizeStore';
 import { createSendAddressAction } from 'src/modules/ethereum/transactions/addressAction';
 import { HiddenValidationInput } from 'src/ui/shared/forms/HiddenValidationInput';
 import { DelayedRender } from 'src/ui/components/DelayedRender';
+import { isCustomNetworkId } from 'src/modules/ethereum/chains/helpers';
 import {
   DEFAULT_CONFIGURATION,
   applyConfiguration,
@@ -127,7 +128,10 @@ export function SendForm() {
     DEFAULT_CONFIGURATION,
     address,
     positions: positions || undefined,
-    getNetworks: () => networksStore.load(addressChains),
+    getNetworks: async () => {
+      const networksStore = await getNetworksStore();
+      return networksStore.load({ chains: addressChains });
+    },
     client,
   });
   const { tokenItem, nftItem, store } = sendView;
@@ -363,6 +367,13 @@ export function SendForm() {
                   sendView.handleChange('tokenChain', value);
                 }}
                 dialogRootNode={rootNode}
+                filterPredicate={(network) => {
+                  if (preferences?.testnetMode) {
+                    return network.is_testnet || isCustomNetworkId(network.id);
+                  } else {
+                    return true;
+                  }
+                }}
               />
             ) : (
               <NetworkSelect

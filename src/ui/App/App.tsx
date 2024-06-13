@@ -71,6 +71,9 @@ import { SwapForm } from '../pages/SwapForm';
 import { MintDnaFlow } from '../DNA/pages/MintDnaFlow';
 import { UpgradeDnaFlow } from '../DNA/pages/UpgradeDnaFlow';
 import { ChooseGlobalProviderGuard } from '../pages/RequestAccounts/ChooseGlobalProvider/ChooseGlobalProvider';
+import { usePreferences } from '../features/preferences';
+import { HStack } from '../ui-kit/HStack';
+import { Toggle } from '../ui-kit/Toggle';
 import { openTabView } from '../shared/openInTabView';
 import { RouteRestoration, registerPersistentRoute } from './RouteRestoration';
 
@@ -178,11 +181,60 @@ function PageLayoutViews() {
   );
 }
 
+function TestModeDecoration() {
+  useBodyStyle(useMemo(() => ({ paddingBottom: '36px' }), []));
+  const { preferences, setPreferences } = usePreferences();
+  return (
+    <div
+      style={{
+        pointerEvents: 'none',
+        position: 'fixed',
+        width: 'var(--body-width)',
+        top: 0,
+        bottom: 0,
+        zIndex: 'var(--over-layout-index)',
+        // outline: '2px solid cyan',
+        // outlineOffset: -2,
+        borderImage: 'linear-gradient(45deg, cyan, #003aff, #ff00e4, #00ffbc)',
+        borderImageSlice: 1,
+        borderWidth: 4,
+        borderStyle: 'solid',
+        display: 'grid',
+        alignItems: 'end',
+      }}
+    >
+      <div
+        style={{
+          pointerEvents: 'auto',
+          backgroundColor: 'var(--primary-200)',
+          display: 'flex',
+          justifyContent: 'center',
+          padding: 6,
+        }}
+      >
+        <HStack gap={8}>
+          <UIText kind="small/accent" color="var(--primary)">
+            Testnets
+          </UIText>
+          <Toggle
+            checked={preferences?.testnetMode}
+            onChange={(event) => {
+              setPreferences({ testnetMode: event.currentTarget.checked });
+            }}
+          />
+        </HStack>
+      </div>
+    </div>
+  );
+}
+
 function Views({ initialRoute }: { initialRoute?: string }) {
   useScreenViewChange();
+  const { preferences } = usePreferences();
   return (
     <RouteResolver>
       <ViewArea>
+        {preferences?.testnetMode ? <TestModeDecoration /> : null}
         <URLBar />
         {templateData.windowContext === 'popup' ? (
           <RouteRestoration initialRoute={initialRoute} />
@@ -395,6 +447,7 @@ registerPersistentRoute('/send-form');
 registerPersistentRoute('/swap-form');
 
 function GlobalKeyboardShortcuts() {
+  const { preferences, setPreferences } = usePreferences();
   return (
     <>
       {templateData.windowContext === 'dialog' ? (
@@ -416,6 +469,12 @@ function GlobalKeyboardShortcuts() {
           // Helper for development and debugging :)
           const url = new URL(window.location.href);
           openTabView(url);
+        }}
+      />
+      <KeyboardShortcut
+        combination="t"
+        onKeyDown={() => {
+          setPreferences({ testnetMode: !preferences?.testnetMode });
         }}
       />
     </>

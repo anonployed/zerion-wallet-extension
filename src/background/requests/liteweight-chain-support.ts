@@ -33,7 +33,7 @@ export function initialize(account: Account) {
     if (!chainId) {
       return;
     }
-    const networks = await networksStore.loadNetworksWithChainId(chainId);
+    const networks = await networksStore.loadNetworksByChainId(chainId);
     const network = networks.getNetworkById(chainId);
     registerChainAndAddressIfPossible(network.id, address);
   });

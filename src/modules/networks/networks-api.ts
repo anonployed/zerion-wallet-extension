@@ -1,4 +1,5 @@
 import { wait } from 'src/shared/wait';
+import type { Client } from 'defi-sdk';
 import { rejectAfterDelay } from 'src/shared/rejectAfterDelay';
 import { fetchChains, getNetworksBySearch } from '../ethereum/chains/requests';
 import type { NetworkConfig } from './NetworkConfig';
@@ -12,9 +13,26 @@ async function getNetworksFallback() {
   return networksFallbackInfo;
 }
 
-export function getNetworks(ids?: string[]): Promise<NetworkConfig[]> {
+export function getNetworks({
+  ids,
+  client,
+  include_testnets,
+  supported_only = false,
+}: {
+  ids: string[] | null;
+  client: Client;
+  include_testnets: boolean;
+  supported_only: boolean;
+}): Promise<NetworkConfig[]> {
   return Promise.race([
-    fetchChains({ ids, include_testnets: Boolean(ids), supported_only: false }),
+    fetchChains(
+      {
+        ids: ids || undefined,
+        include_testnets: Boolean(ids) || include_testnets,
+        supported_only,
+      },
+      client
+    ),
     ids
       ? rejectAfterDelay(CHAIN_INFO_TIMEOUT, `getNetworks(${ids.join()})`)
       : getNetworksFallback(),

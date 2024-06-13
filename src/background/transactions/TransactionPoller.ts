@@ -118,7 +118,7 @@ export class TransactionsPoller {
 
     const promises = Array.from(this.hashes.values()).map(async (value) => {
       const { chainId, hash } = value;
-      const networks = await networksStore.loadNetworksWithChainId(chainId);
+      const networks = await networksStore.loadNetworksByChainId(chainId);
       const rpcUrl = networks.getRpcUrlInternal(networks.getChainById(chainId));
       return Promise.all([
         this.getTransactionCount(rpcUrl, value.from).then((count) =>

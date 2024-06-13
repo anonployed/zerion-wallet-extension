@@ -62,6 +62,7 @@ import { invariant } from 'src/shared/invariant';
 import { SurfaceItemAnchor } from 'src/ui/ui-kit/SurfaceList';
 import { ErrorBoundary } from 'src/ui/components/ErrorBoundary';
 import { useStore } from '@store-unit/react';
+import { useDefiSdkClient } from 'src/modules/defi-sdk/useDefiSdkClient';
 import {
   TAB_SELECTOR_HEIGHT,
   TAB_TOP_PADDING,
@@ -625,10 +626,10 @@ function MultiChainPositions({
   filterChain: string | null;
   onChainChange: (value: string | null) => void;
 } & Omit<React.ComponentProps<typeof PositionList>, 'items'>) {
-  const { value, isLoading } = useAddressPositions({
-    ...addressParams,
-    currency: 'usd',
-  });
+  const { value, isLoading } = useAddressPositions(
+    { ...addressParams, currency: 'usd' },
+    { client: useDefiSdkClient() }
+  );
 
   const chainValue = filterChain || dappChain || NetworkSelectValue.All;
 
@@ -782,7 +783,7 @@ export function Positions({
       address: singleAddressNormalized,
       currency: 'usd',
     },
-    { enabled: ready }
+    { enabled: ready, client: useDefiSdkClient() }
   );
   const chainValue = filterChain || dappChain || NetworkSelectValue.All;
   const chain =
@@ -805,7 +806,7 @@ export function Positions({
       <CenteredFillViewportView
         maxHeight={getGrownTabMaxHeight(offsetValuesState)}
       >
-        <DelayedRender delay={2000}>
+        <DelayedRender delay={500}>
           <ViewLoading kind="network" />
         </DelayedRender>
       </CenteredFillViewportView>

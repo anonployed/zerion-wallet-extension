@@ -31,11 +31,12 @@ type Address = string;
  */
 interface PublicPreferences {
   /**
-   * DEPRECATED
+   * @deprecated
    * Whether to show DApp Network Switch in Header
    * Defaults to `true`
    */
   showNetworkSwitchShortcut?: boolean;
+  /** @deprecated */
   overviewChain?: string;
   /**
    * Allow to configure nonce before signing transactions
@@ -47,6 +48,7 @@ interface PublicPreferences {
   upgradeDnaBannerDismissed?: boolean;
   backupReminderDismissedTime?: number;
   enableTestnets?: boolean;
+  testnetMode?: boolean;
 }
 
 export interface Permission {

@@ -1,40 +1,72 @@
 import { useCallback, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, hashQueryKey } from '@tanstack/react-query';
 import { queryClient } from 'src/ui/shared/requests/queryClient';
 import { emitter } from 'src/ui/shared/events';
-import { networksStore } from 'src/modules/networks/networks-store.client';
+import {
+  mainNetworksStore,
+  testenvNetworksStore,
+} from 'src/modules/networks/networks-store.client';
+import { usePreferences } from 'src/ui/features/preferences';
+import { invariant } from 'src/shared/invariant';
 import { getNetworksBySearch } from '../ethereum/chains/requests';
 import type { ChainId } from '../ethereum/transactions/ChainId';
+import { NetworksStore } from './networks-store';
 
-export function useNetworks(chainIds?: string[]) {
+function useNetworksStore() {
+  const { preferences } = usePreferences();
+  return !preferences
+    ? null
+    : preferences.testnetMode
+    ? testenvNetworksStore
+    : mainNetworksStore;
+}
+
+export function useNetworks(chains?: string[]) {
+  const networksStore = useNetworksStore();
   const { data: networks = null, ...query } = useQuery({
-    queryKey: ['loadNetworks', chainIds],
-    queryFn: () => networksStore.load(chainIds),
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    queryKey: ['loadNetworks', chains, networksStore],
+    queryKeyHashFn: (queryKey) => {
+      const stringifiable = queryKey.map((x) =>
+        x instanceof NetworksStore ? x.client.url : x
+      );
+      return hashQueryKey(stringifiable);
+    },
+    queryFn: () => {
+      invariant(networksStore, 'Enable query when networks store is ready');
+      return networksStore.load(chains ? { chains } : undefined);
+    },
+    staleTime: 1000 * 60 * 5,
     suspense: false,
     useErrorBoundary: true,
+    enabled: Boolean(networksStore),
   });
 
   useEffect(() => {
-    networksStore.on('change', ({ networks }) => {
+    return networksStore?.on('change', ({ networks }) => {
       if (networks) {
-        queryClient.setQueryData(['loadNetworks', chainIds], networks);
+        queryClient.setQueryData(['loadNetworks', chains], networks);
       }
     });
-  }, [chainIds]);
+  }, [chains, networksStore]);
 
   return {
     networks,
     ...query,
     loadNetworkByChainId: useCallback(
-      (chainId: ChainId) => networksStore.loadNetworksWithChainId(chainId),
-      []
+      (chainId: ChainId) => {
+        invariant(
+          networksStore,
+          'networksStore is not ready until preferences are read'
+        );
+        return networksStore.loadNetworksByChainId(chainId);
+      },
+      [networksStore]
     ),
   };
 }
 
 export function useSearchNetworks({ query = '' }: { query?: string }) {
+  const networksStore = useNetworksStore();
   const { data: queryData, ...queryResult } = useQuery({
     queryKey: ['getNetworksBySearch', query],
     queryFn: () => getNetworksBySearch({ query: query.trim().toLowerCase() }),
@@ -47,8 +79,8 @@ export function useSearchNetworks({ query = '' }: { query?: string }) {
   const { networks } = useNetworks();
   useEffect(() => {
     if (queryData) {
-      networksStore.pushConfigs(...queryData);
+      networksStore?.pushConfigs(...queryData);
     }
-  }, [queryData]);
+  }, [networksStore, queryData]);
   return { networks, ...queryResult };
 }

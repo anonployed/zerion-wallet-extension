@@ -15,6 +15,7 @@ import { queryClient } from './shared/requests/queryClient';
 import { emitter } from './shared/events';
 import { maybeOpenOboarding } from './Onboarding/initialization';
 import { OnboardingInterrupt } from './Onboarding/errors';
+import { getPreferences } from './features/preferences/usePreferences';
 
 applyDrawFix();
 if (process.env.NODE_ENV === 'development') {
@@ -65,6 +66,7 @@ async function initializeUI({
     initializeChannels();
     const { mode } = await maybeOpenOboarding();
     queryClient.clear();
+    await getPreferences(); // seed queryClient. TODO before merge: do we need this?
     await configureUIClient();
     initializeClientAnalytics();
     renderApp({ initialView, mode, inspect });
@@ -102,7 +104,10 @@ new BackgroundScriptUpdateHandler({
   onFailedHandshake: () => handleFailedHandshake(),
 }).keepAlive();
 
-initializeUI();
+initializeUI().then(() => {
+  // TODO: remove this event?
+  emitter.emit('uiInitialized');
+});
 
 // TODO: replace with window.location.reload
 emitter.on('reloadExtension', initializeUI);

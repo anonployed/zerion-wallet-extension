@@ -44,7 +44,7 @@ import { Button } from 'src/ui/ui-kit/Button';
 import { focusNode } from 'src/ui/shared/focusNode';
 import { useAddressParams } from 'src/ui/shared/user-address/useAddressParams';
 import { WalletDisplayName } from 'src/ui/components/WalletDisplayName';
-import { networksStore } from 'src/modules/networks/networks-store.client';
+import { getNetworksStore } from 'src/modules/networks/networks-store.client';
 import type { PartiallyRequired } from 'src/shared/type-utils/PartiallyRequired';
 import { useGasPrices } from 'src/ui/shared/requests/useGasPrices';
 import { openInNewWindow } from 'src/ui/shared/openInNewWindow';
@@ -83,6 +83,7 @@ import { valueToHex } from 'src/shared/units/valueToHex';
 import type { ChainGasPrice } from 'src/modules/ethereum/transactions/gasPrices/types';
 import { FEATURE_PAYMASTER_ENABLED } from 'src/env/config';
 import { hasNetworkFee } from 'src/modules/ethereum/transactions/gasPrices/hasNetworkFee';
+import { resolveChainId } from 'src/modules/ethereum/transactions/resolveChainId';
 import { TransactionConfiguration } from './TransactionConfiguration';
 import {
   DEFAULT_CONFIGURATION,
@@ -278,7 +279,10 @@ async function resolveChain(
   transaction: IncomingTransaction,
   currentChain: Chain
 ): Promise<PartiallyRequired<IncomingTransaction, 'chainId'>> {
-  const networks = await networksStore.load([currentChain.toString()]);
+  const networksStore = await getNetworksStore();
+  const networks = await networksStore.load({
+    chains: [currentChain.toString()],
+  });
   const chainId = transaction.chainId
     ? normalizeChainId(transaction.chainId)
     : networks.getChainId(currentChain);
@@ -287,7 +291,9 @@ async function resolveChain(
 }
 
 async function resolveGasAndFee(transaction: IncomingTransactionWithChainId) {
-  const networks = await networksStore.load();
+  const chainId = resolveChainId(transaction);
+  const networksStore = await getNetworksStore();
+  const networks = await networksStore.loadNetworksByChainId(chainId);
   return await prepareGasAndNetworkFee(transaction, networks);
 }
 

@@ -4,6 +4,7 @@ import { getError } from 'src/shared/errors/getError';
 type EthersSignMethod = 'sendTransaction' | '_signTypedData' | 'signMessage';
 
 export const emitter = createNanoEvents<{
+  uiInitialized: () => void;
   uiAccountsChanged: () => void;
   hotkeydown: (combination: string) => void;
   sessionLogout: () => void;

@@ -24,6 +24,7 @@ import AllNetworksIcon from 'jsx:src/ui/assets/network.svg';
 import CloseIcon from 'jsx:src/ui/assets/close_solid.svg';
 import { Button } from 'src/ui/ui-kit/Button';
 import { useStore } from '@store-unit/react';
+import { useDefiSdkClient } from 'src/modules/defi-sdk/useDefiSdkClient';
 import {
   getCurrentTabsOffset,
   getGrownTabMaxHeight,
@@ -120,6 +121,7 @@ function useMinedAndPendingAddressActions({
       actions_search_query: searchQuery,
     },
     {
+      client: useDefiSdkClient(),
       limit: 30,
       listenForUpdates: true,
       paginatedCacheMode: 'first-page',

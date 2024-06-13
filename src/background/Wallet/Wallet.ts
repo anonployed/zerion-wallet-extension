@@ -188,11 +188,6 @@ export class Wallet {
       })
     );
     this.notificationWindow = notificationWindow;
-    this.disposer.add(
-      networksStore.on('change', () => {
-        this.verifyOverviewChain();
-      })
-    );
     this.userCredentials = userCredentials;
     this.record = null;
 
@@ -820,7 +815,7 @@ export class Wallet {
     spender: string;
   }>) {
     this.verifyInternalOrigin(context);
-    const networks = await networksStore.load([chain]);
+    const networks = await networksStore.load({ chains: [chain] });
     const chainId = networks.getChainId(createChain(chain));
     invariant(chainId, 'Chain id should exist for approve transaction');
     const provider = await this.getProvider(chainId);
@@ -845,7 +840,7 @@ export class Wallet {
     owner: string;
   }>) {
     this.verifyInternalOrigin(context);
-    const networks = await networksStore.load([chain]);
+    const networks = await networksStore.load({ chains: [chain] });
     const chainId = networks.getChainId(createChain(chain));
     invariant(chainId, 'Chain id should exist for fetch allowance');
     const provider = await this.getProvider(chainId);
@@ -885,7 +880,7 @@ export class Wallet {
       return fallbackChainId;
     }
     const chain = Model.getChainForOrigin(this.record, { origin });
-    const networks = await networksStore.load([chain.toString()]);
+    const networks = await networksStore.load({ chains: [chain.toString()] });
     return networks.getChainId(chain) || fallbackChainId;
   }
 
@@ -897,7 +892,7 @@ export class Wallet {
     this.ensureRecord(this.record);
     const fallbackChain = NetworkId.Ethereum;
     const chain = Model.getChainForOrigin(this.record, { origin });
-    const networks = await networksStore.load([chain.toString()]);
+    const networks = await networksStore.load({ chains: [chain.toString()] });
     return networks.getNetworkByName(chain)?.id || fallbackChain;
   }
 
@@ -926,7 +921,7 @@ export class Wallet {
   }
 
   private async getProvider(chainId: ChainId) {
-    const networks = await networksStore.loadNetworksWithChainId(chainId);
+    const networks = await networksStore.loadNetworksByChainId(chainId);
     const nodeUrl = networks.getRpcUrlInternal(networks.getChainById(chainId));
     if (FEATURE_PAYMASTER_ENABLED) {
       return new ZksProvider(nodeUrl);
@@ -997,7 +992,7 @@ export class Wallet {
     const chainId = normalizeTransactionChainId(incomingTransaction);
     invariant(chainId, 'Must resolve chainId first');
 
-    const networks = await networksStore.loadNetworksWithChainId(chainId);
+    const networks = await networksStore.loadNetworksByChainId(chainId);
     const prepared = prepareTransaction(incomingTransaction);
     const txWithFee = await prepareGasAndNetworkFee(prepared, networks);
     const transaction = await prepareNonce(txWithFee, networks, chain);
@@ -1081,7 +1076,7 @@ export class Wallet {
     this.ensureStringOrigin(context);
     const { serialized, ...transactionContextParams } = params;
     const { chain } = transactionContextParams;
-    const networks = await networksStore.load([chain]);
+    const networks = await networksStore.load({ chains: [chain] });
     const chainId = networks.getChainId(createChain(chain));
     invariant(chainId, 'Chain id should exist for send signed transaction');
     const provider = await this.getProvider(chainId);
@@ -1248,17 +1243,6 @@ export class Wallet {
     this.verifyInternalOrigin(context);
     this.ensureRecord(this.record);
     chainConfigStore.removeEthereumChain(createChain(chainStr));
-    this.verifyOverviewChain();
-  }
-
-  private async verifyOverviewChain() {
-    const networks = await networksStore.load();
-    if (this.record) {
-      this.record = Model.verifyOverviewChain(this.record, {
-        availableChains: networks.getNetworks().map((n) => createChain(n.id)),
-      });
-      this.updateWalletStore(this.record);
-    }
   }
 
   async getEthereumChainSources({ context }: PublicMethodParams) {
@@ -1659,7 +1643,7 @@ class PublicController {
     params,
     context,
     id,
-  }: PublicMethodParams<[{ chainId: string | number }]>): Promise<
+  }: PublicMethodParams<[{ chainId?: string | number }]>): Promise<
     null | object
   > {
     const currentAddress = this.wallet.readCurrentAddress();
@@ -1669,13 +1653,17 @@ class PublicController {
     invariant(params[0], () => new InvalidParams());
     const { origin } = context;
     const { chainId: chainIdParameter } = params[0];
+    invariant(
+      chainIdParameter,
+      'ChainId is a required param for wallet_switchEthereumChain method'
+    );
     const chainId = normalizeChainId(chainIdParameter);
 
     if (
       !currentAddress ||
       !this.wallet.allowedOrigin(context, currentAddress)
     ) {
-      const networks = await networksStore.load();
+      const networks = await networksStore.loadNetworksByChainId(chainId);
       const chain = networks.getChainById(chainId);
       return new Promise((resolve, reject) => {
         this.safeOpenDialogWindow(origin, {
@@ -1699,7 +1687,7 @@ class PublicController {
     if (chainId === currentChainIdForThisOrigin) {
       return null;
     }
-    const networks = await networksStore.loadNetworksWithChainId(chainId);
+    const networks = await networksStore.loadNetworksByChainId(chainId);
     try {
       const chain = networks.getChainById(chainId);
       // Switch immediately and return success
@@ -1792,7 +1780,7 @@ class PublicController {
     const { chainId: chainIdParameter } = params[0];
     const chainId = normalizeChainId(chainIdParameter);
     const normalizedParams = { ...params[0], chainId };
-    const networks = await networksStore.loadNetworksWithChainId(chainId);
+    const networks = await networksStore.loadNetworksByChainId(chainId);
     return new Promise((resolve, reject) => {
       if (networks.hasMatchingConfig(normalizedParams)) {
         resolve(null); // null indicates success as per spec

@@ -289,6 +289,18 @@ function DeveloperTools() {
             detailText="Enables viewing and interacting with test networks"
           />
         </Frame>
+        <Frame>
+          <ToggleSettingLine
+            text="Testnet Mode"
+            checked={preferences?.testnetMode || false}
+            onChange={(event) => {
+              setPreferences({
+                testnetMode: event.target.checked,
+              });
+            }}
+            detailText="Enables viewing and interacting with test networks"
+          />
+        </Frame>
       </VStack>
       <PageBottom />
     </PageColumn>
