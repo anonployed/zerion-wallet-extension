@@ -1,4 +1,5 @@
 import type { InDappNotification } from 'src/shared/types/InDappNotification';
+import { isObj } from 'src/shared/isObj';
 import * as styles from './styles.module.css';
 
 function preloadImage(url: string): Promise<HTMLImageElement> {
@@ -71,7 +72,7 @@ const notifications = {
 };
 
 async function createNotification(notification: InDappNotification) {
-  if (notification.event === 'chainChanged') {
+  if (notification.notificationEvent === 'chainChanged') {
     return await notifications.chainChanged(
       notification.networkName,
       notification.networkIcon
@@ -111,4 +112,12 @@ async function showNotification(notification: InDappNotification) {
   });
 }
 
-Object.assign(window, { showNotification, removeNotification });
+function isDappNotification(message: unknown): message is InDappNotification {
+  return isObj(message) && 'notificationEvent' in message;
+}
+
+chrome.runtime.onMessage.addListener((message, sender, _sendResponse) => {
+  if (!sender.tab && isDappNotification(message)) {
+    showNotification(message);
+  }
+});

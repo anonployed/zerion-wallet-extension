@@ -1,10 +1,10 @@
 export type InDappNotification =
   | {
-      event: 'chainChanged';
+      notificationEvent: 'chainChanged';
       networkName: string;
       networkIcon: string;
     }
   | {
-      event: 'switchChainError';
+      notificationEvent: 'switchChainError';
       chainId: string;
     };

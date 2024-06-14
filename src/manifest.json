@@ -32,18 +32,17 @@
       "js": ["content-script/index.ts"],
       "matches": ["https://*/*", "http://localhost/*", "http://0.0.0.0/*"],
       "run_at": "document_start"
+    },
+    {
+      "all_frames": true,
+      "js": ["content-script/in-dapp-notification/index.ts"],
+      "matches": ["https://*/*", "http://localhost/*", "http://0.0.0.0/*"],
+      "run_at": "document_idle"
     }
   ],
   "web_accessible_resources": [
     {
       "resources": ["content-script/in-page.ts"],
-      "matches": ["<all_urls>"]
-    },
-    {
-      "resources": [
-        "content-script/in-dapp-notification/index.ts",
-        "content-script/in-dapp-notification/index.css"
-      ],
       "matches": ["<all_urls>"]
     }
   ],
